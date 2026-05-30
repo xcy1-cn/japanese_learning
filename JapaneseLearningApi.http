@@ -1,0 +1,6 @@
+@JapaneseLearningApi_HostAddress = http://localhost:5251
+
+GET {{JapaneseLearningApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
