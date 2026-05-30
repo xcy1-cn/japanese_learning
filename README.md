@@ -1,1 +1,14 @@
 # japanese_learning
+
+Day 1 完成后端基础结构搭建：
+1. 创建 ASP.NET Core Web API 项目结构。
+2. 配置 MySQL 连接字符串。
+3. 安装并配置 EF Core + Pomelo MySQL Provider。
+4. 创建 AppDbContext。
+5. 创建 AdminUser、Article、Sentence、Vocabulary、GrammarPoint、Question 等核心实体。
+6. 创建 SentenceVocabulary、SentenceGrammarPoint 中间表。
+7. 配置 Article 与 Sentence 的一对多关系。
+8. 配置 Sentence 与 Vocabulary、GrammarPoint 的多对多关系。
+9. 执行 EF Core Migration 并成功生成数据库表。
+10. 通过 MySQL 和 DBeaver 验证数据库结构和表关系。
+
