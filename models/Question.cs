@@ -28,7 +28,5 @@ public class Question
 
     public string Explanation { get; set; } = string.Empty;
 
-    public string Level { get; set; } = string.Empty;
-
     public DateTime CreatedAt { get; set; } = DateTime.Now;
 }

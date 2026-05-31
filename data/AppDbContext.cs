@@ -26,6 +26,7 @@ public class AppDbContext : DbContext
 
     public DbSet<SentenceGrammarPoint> SentenceGrammarPoints => Set<SentenceGrammarPoint>();
 
+    // OnModelCreating 用于配置实体之间的复杂关系，尤其是数据库默认约定无法完全表达的关系。
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -57,9 +58,13 @@ public class AppDbContext : DbContext
             .HasForeignKey(sg => sg.GrammarPointId);
 
         modelBuilder.Entity<Article>()
+            //一个 Article 有多个 Sentence
             .HasMany(a => a.Sentences)
+            //一个 Sentence 属于一个 Article
             .WithOne(s => s.Article)
+            //外键是 Sentence.ArticleId
             .HasForeignKey(s => s.ArticleId)
+            //删除 Article 时，相关 Sentence 级联删除
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Question>()

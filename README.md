@@ -12,3 +12,12 @@ Day 1 完成后端基础结构搭建：
 9. 执行 EF Core Migration 并成功生成数据库表。
 10. 通过 MySQL 和 DBeaver 验证数据库结构和表关系。
 
+Day 2 的目标是完成核心业务资源的基础 CRUD Controller，包括：
+1. ArticleController
+2. SentenceController
+3. VocabularyController
+4. GrammarPointController
+5. QuestionController
+
+Controller → AppDbContext → EF Core → MySQL → Swagger 测试
+
