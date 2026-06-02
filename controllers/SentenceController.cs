@@ -18,12 +18,59 @@ public class SentenceController : ControllerBase
 
     // GET: api/Sentence
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Sentence>>> GetSentences()
+    /* 
+    string? keyword,
+    int? articleId,
+    GET /api/Sentence?keyword=学生&page=1&pageSize=10
+     */
+    public async Task<IActionResult> GetSentences(
+    string? keyword,
+    int? articleId,
+    int page = 1,
+    int pageSize = 10
+)
     {
-        var sentences = await _context.Sentences
+        if (page <= 0)
+        {
+            page = 1;
+        }
+
+        if (pageSize <= 0)
+        {
+            pageSize = 10;
+        }
+
+        var query = _context.Sentences.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            query = query.Where(s =>
+                s.JapaneseText.Contains(keyword) ||
+                s.ChineseText.Contains(keyword) ||
+                s.Romaji.Contains(keyword)
+            );
+        }
+
+        if (articleId.HasValue)
+        {
+            query = query.Where(s => s.ArticleId == articleId.Value);
+        }
+
+        var total = await query.CountAsync();
+
+        var items = await query
+            .OrderBy(s => s.OrderIndex)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .ToListAsync();
 
-        return Ok(sentences);
+        return Ok(new
+        {
+            total,
+            page,
+            pageSize,
+            items
+        });
     }
 
     // GET: api/Sentence/1

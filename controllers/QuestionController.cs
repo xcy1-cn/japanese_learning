@@ -18,11 +18,65 @@ public class QuestionController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Question>>> GetQuestions()
+    /* 
+    GET /api/Question?type=vocabulary_choice&keyword=学生&page=1&pageSize=10
+     */
+    public async Task<IActionResult> GetQuestions(
+    string? type,
+    string? keyword,
+    int page = 1,
+    int pageSize = 10
+)
     {
-        var questions = await _context.Questions.ToListAsync();
+        if (page <= 0)
+        {
+            page = 1;
+        }
 
-        return Ok(questions);
+        if (pageSize <= 0)
+        {
+            pageSize = 10;
+        }
+
+        var query = _context.Questions.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(type))
+        {
+            query = query.Where(q => q.Type == type);
+        }
+
+        // if (!string.IsNullOrWhiteSpace(level))
+        // {
+        //     query = query.Where(q => q.Level == level);
+        // }
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            query = query.Where(q =>
+                q.Stem.Contains(keyword) ||
+                q.OptionA.Contains(keyword) ||
+                q.OptionB.Contains(keyword) ||
+                q.OptionC.Contains(keyword) ||
+                q.OptionD.Contains(keyword) ||
+                q.Explanation.Contains(keyword)
+            );
+        }
+
+        var total = await query.CountAsync();
+
+        var items = await query
+            .OrderByDescending(q => q.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return Ok(new
+        {
+            total,
+            page,
+            pageSize,
+            items
+        });
     }
 
     [HttpGet("{id}")]

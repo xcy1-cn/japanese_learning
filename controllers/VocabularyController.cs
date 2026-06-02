@@ -17,11 +17,66 @@ public class VocabularyController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Vocabulary>>> GetVocabularies()
+    /* 
+    string? word,
+    string? level,
+    string? partOfSpeech,
+    GET /api/Vocabulary?word=学生&level=N5&partOfSpeech=noun&page=1&pageSize=10
+     */
+    public async Task<IActionResult> GetVocabularies(
+        string? word,
+        string? level,
+        string? partOfSpeech,
+        int page = 1,
+        int pageSize = 10
+    )
     {
-        var vocabularies = await _context.Vocabularies.ToListAsync();
+        if (page <= 0)
+        {
+            page = 1;
+        }
 
-        return Ok(vocabularies);
+        if (pageSize <= 0)
+        {
+            pageSize = 10;
+        }
+
+        var query = _context.Vocabularies.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(word))
+        {
+            query = query.Where(v =>
+                v.Word.Contains(word) ||
+                v.Reading.Contains(word) ||
+                v.Meaning.Contains(word)
+            );
+        }
+
+        if (!string.IsNullOrWhiteSpace(level))
+        {
+            query = query.Where(v => v.Level == level);
+        }
+
+        if (!string.IsNullOrWhiteSpace(partOfSpeech))
+        {
+            query = query.Where(v => v.PartOfSpeech == partOfSpeech);
+        }
+
+        var total = await query.CountAsync();
+
+        var items = await query
+            .OrderByDescending(v => v.Id)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return Ok(new
+        {
+            total,
+            page,
+            pageSize,
+            items
+        });
     }
 
     [HttpGet("{id}")]

@@ -123,3 +123,11 @@
 /Users/xcy-macbook/Desktop/项目库/JapaneseLearningApi/obj/Debug/net10.0/JapaneseLearningApi.genruntimeconfig.cache
 /Users/xcy-macbook/Desktop/项目库/JapaneseLearningApi/obj/Debug/net10.0/ref/JapaneseLearningApi.dll
 /Users/xcy-macbook/Desktop/项目库/JapaneseLearningApi/obj/Debug/net10.0/JapaneseLearningApi.sourcelink.json
+/Users/xcy-macbook/Desktop/项目库/JapaneseLearningApi/bin/Debug/net10.0/Microsoft.AspNetCore.Authentication.JwtBearer.dll
+/Users/xcy-macbook/Desktop/项目库/JapaneseLearningApi/bin/Debug/net10.0/Microsoft.IdentityModel.Abstractions.dll
+/Users/xcy-macbook/Desktop/项目库/JapaneseLearningApi/bin/Debug/net10.0/Microsoft.IdentityModel.JsonWebTokens.dll
+/Users/xcy-macbook/Desktop/项目库/JapaneseLearningApi/bin/Debug/net10.0/Microsoft.IdentityModel.Logging.dll
+/Users/xcy-macbook/Desktop/项目库/JapaneseLearningApi/bin/Debug/net10.0/Microsoft.IdentityModel.Protocols.dll
+/Users/xcy-macbook/Desktop/项目库/JapaneseLearningApi/bin/Debug/net10.0/Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+/Users/xcy-macbook/Desktop/项目库/JapaneseLearningApi/bin/Debug/net10.0/Microsoft.IdentityModel.Tokens.dll
+/Users/xcy-macbook/Desktop/项目库/JapaneseLearningApi/bin/Debug/net10.0/System.IdentityModel.Tokens.Jwt.dll
