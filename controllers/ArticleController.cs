@@ -96,6 +96,25 @@ public class ArticleController : ControllerBase
         return article;
     }
 
+    [HttpGet("{id}/sentences")]
+    public async Task<IActionResult> GetArticleSentences(int id)
+    {
+        var articleExists = await _context.Articles
+            .AnyAsync(a => a.Id == id);
+
+        if (!articleExists)
+        {
+            return NotFound("Article not found.");
+        }
+
+        var sentences = await _context.Sentences
+            .Where(s => s.ArticleId == id)
+            .OrderBy(s => s.OrderIndex)
+            .ToListAsync();
+
+        return Ok(sentences);
+    }
+
     [HttpPost]
     public async Task<ActionResult<Article>> CreateArticle(Article article)
     {

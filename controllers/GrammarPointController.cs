@@ -95,6 +95,52 @@ public class GrammarPointController : ControllerBase
         return CreatedAtAction(nameof(GetGrammarPoint), new { id = grammarPoint.Id }, grammarPoint);
     }
 
+    // POST: {sentenceId}/grammar-points/{grammarPointId}
+    [HttpPost("{sentenceId}/grammar-points/{grammarPointId}")]
+    public async Task<IActionResult> AddGrammarPointToSentence(
+    int sentenceId,
+    int grammarPointId
+)
+    {
+        var sentenceExists = await _context.Sentences
+            .AnyAsync(s => s.Id == sentenceId);
+
+        if (!sentenceExists)
+        {
+            return NotFound("Sentence not found.");
+        }
+
+        var grammarPointExists = await _context.GrammarPoints
+            .AnyAsync(g => g.Id == grammarPointId);
+
+        if (!grammarPointExists)
+        {
+            return NotFound("Grammar point not found.");
+        }
+
+        var relationExists = await _context.SentenceGrammarPoints
+            .AnyAsync(sg =>
+                sg.SentenceId == sentenceId &&
+                sg.GrammarPointId == grammarPointId
+            );
+
+        if (relationExists)
+        {
+            return BadRequest("This grammar point is already linked to the sentence.");
+        }
+
+        var relation = new SentenceGrammarPoint
+        {
+            SentenceId = sentenceId,
+            GrammarPointId = grammarPointId
+        };
+
+        _context.SentenceGrammarPoints.Add(relation);
+        await _context.SaveChangesAsync();
+
+        return Ok("Grammar point linked to sentence successfully.");
+    }
+
     [HttpPut("{id}")]
     public async Task<ActionResult<GrammarPoint>> UpdateGrammarPoint(int id, GrammarPoint grammarPoint)
     {

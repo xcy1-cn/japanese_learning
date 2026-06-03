@@ -88,6 +88,98 @@ public class SentenceController : ControllerBase
         return Ok(sentence);
     }
 
+    //  GET: api/Sentence/1/detail
+    [HttpGet("{id}/detail")]
+    public async Task<IActionResult> GetSentenceDetail(int id)
+    {
+        var sentence = await _context.Sentences
+            .Where(s => s.Id == id)
+            .Select(s => new
+            {
+                s.Id,
+                s.ArticleId,
+                s.JapaneseText,
+                s.ChineseText,
+                s.Romaji,
+                s.OrderIndex,
+                s.CreatedAt,
+
+                Vocabularies = s.SentenceVocabularies.Select(sv => new
+                {
+                    sv.Vocabulary!.Id,
+                    sv.Vocabulary.Word,
+                    sv.Vocabulary.Reading,
+                    sv.Vocabulary.Meaning,
+                    sv.Vocabulary.PartOfSpeech,
+                    sv.Vocabulary.Level
+                }).ToList(),
+
+                GrammarPoints = s.SentenceGrammarPoints.Select(sg => new
+                {
+                    sg.GrammarPoint!.Id,
+                    sg.GrammarPoint.Title,
+                    sg.GrammarPoint.Explanation,
+                    sg.GrammarPoint.Structure,
+                    sg.GrammarPoint.Example,
+                    sg.GrammarPoint.Level
+                }).ToList()
+            })
+            .FirstOrDefaultAsync();
+
+        if (sentence == null)
+        {
+            return NotFound("Sentence not found.");
+        }
+
+        return Ok(sentence);
+    }
+
+    //  POST: api/Sentence/1/vocabularies/{vocabularyId}
+    [HttpPost("{sentenceId}/vocabularies/{vocabularyId}")]
+    public async Task<IActionResult> AddVocabularyToSentence(
+    int sentenceId,
+    int vocabularyId
+)
+    {
+        var sentenceExists = await _context.Sentences
+            .AnyAsync(s => s.Id == sentenceId);
+
+        if (!sentenceExists)
+        {
+            return NotFound("Sentence not found.");
+        }
+
+        var vocabularyExists = await _context.Vocabularies
+            .AnyAsync(v => v.Id == vocabularyId);
+
+        if (!vocabularyExists)
+        {
+            return NotFound("Vocabulary not found.");
+        }
+
+        var relationExists = await _context.SentenceVocabularies
+            .AnyAsync(sv =>
+                sv.SentenceId == sentenceId &&
+                sv.VocabularyId == vocabularyId
+            );
+
+        if (relationExists)
+        {
+            return BadRequest("This vocabulary is already linked to the sentence.");
+        }
+
+        var relation = new SentenceVocabulary
+        {
+            SentenceId = sentenceId,
+            VocabularyId = vocabularyId
+        };
+
+        _context.SentenceVocabularies.Add(relation);
+        await _context.SaveChangesAsync();
+
+        return Ok("Vocabulary linked to sentence successfully.");
+    }
+
     // POST: api/Sentence
     [HttpPost]
     public async Task<ActionResult<Sentence>> CreateSentence(Sentence sentence)
@@ -108,6 +200,51 @@ public class SentenceController : ControllerBase
             new { id = sentence.Id },
             sentence
         );
+    }
+
+    [HttpPost("{sentenceId}/grammar-points/{grammarPointId}")]
+    public async Task<IActionResult> AddGrammarPointToSentence(
+    int sentenceId,
+    int grammarPointId
+)
+    {
+        var sentenceExists = await _context.Sentences
+            .AnyAsync(s => s.Id == sentenceId);
+
+        if (!sentenceExists)
+        {
+            return NotFound("Sentence not found.");
+        }
+
+        var grammarPointExists = await _context.GrammarPoints
+            .AnyAsync(g => g.Id == grammarPointId);
+
+        if (!grammarPointExists)
+        {
+            return NotFound("Grammar point not found.");
+        }
+
+        var relationExists = await _context.SentenceGrammarPoints
+            .AnyAsync(sg =>
+                sg.SentenceId == sentenceId &&
+                sg.GrammarPointId == grammarPointId
+            );
+
+        if (relationExists)
+        {
+            return BadRequest("This grammar point is already linked to the sentence.");
+        }
+
+        var relation = new SentenceGrammarPoint
+        {
+            SentenceId = sentenceId,
+            GrammarPointId = grammarPointId
+        };
+
+        _context.SentenceGrammarPoints.Add(relation);
+        await _context.SaveChangesAsync();
+
+        return Ok("Grammar point linked to sentence successfully.");
     }
 
     // PUT: api/Sentence/1
@@ -153,6 +290,54 @@ public class SentenceController : ControllerBase
         }
 
         _context.Sentences.Remove(sentence);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    // DELETE: api/Sentence/1/vocabularies/{vocabularyId}
+    [HttpDelete("{sentenceId}/vocabularies/{vocabularyId}")]
+    public async Task<IActionResult> RemoveVocabularyFromSentence(
+    int sentenceId,
+    int vocabularyId
+)
+    {
+        var relation = await _context.SentenceVocabularies
+            .FirstOrDefaultAsync(sv =>
+                sv.SentenceId == sentenceId &&
+                sv.VocabularyId == vocabularyId
+            );
+
+        if (relation == null)
+        {
+            return NotFound("Relation not found.");
+        }
+
+        _context.SentenceVocabularies.Remove(relation);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    // DELETE: api/Sentence/{sentenceId}/grammar-points/{grammarPointId}
+    [HttpDelete("{sentenceId}/grammar-points/{grammarPointId}")]
+    public async Task<IActionResult> RemoveGrammarPointFromSentence(
+    int sentenceId,
+    int grammarPointId
+)
+    {
+        var relation = await _context.SentenceGrammarPoints
+            .FirstOrDefaultAsync(sg =>
+                sg.SentenceId == sentenceId &&
+                sg.GrammarPointId == grammarPointId
+            );
+
+        if (relation == null)
+        {
+            return NotFound("Relation not found.");
+        }
+
+        _context.SentenceGrammarPoints.Remove(relation);
         await _context.SaveChangesAsync();
 
         return NoContent();
