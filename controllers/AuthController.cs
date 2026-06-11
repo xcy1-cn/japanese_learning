@@ -4,6 +4,7 @@ using System.Text;
 using JapaneseLearningApi.Data;
 using JapaneseLearningApi.Models;
 using JapaneseLearningApi.Requests;
+using JapaneseLearningApi.Responses;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -32,7 +33,8 @@ public class AuthController : ControllerBase
 
         if (admin == null)
         {
-            return Unauthorized("Invalid username or password.");
+            // return Unauthorized("Invalid username or password.");
+            return BadRequest(ApiResponse<string>.Fail(400, "Invalid username or password."));
         }
 
         var passwordHasher = new PasswordHasher<AdminUser>();
@@ -45,17 +47,27 @@ public class AuthController : ControllerBase
 
         if (result == PasswordVerificationResult.Failed)
         {
-            return Unauthorized("Invalid username or password.");
+            // return Unauthorized("Invalid username or password.");
+            return BadRequest(ApiResponse<string>.Fail(400, "Invalid username or password."));
         }
 
         var token = GenerateJwtToken(admin);
 
-        return Ok(new
+        // return Ok(new
+        // {
+        //     token,
+        //     username = admin.Username,
+        //     role = admin.Role
+        // });
+
+        var response = new AuthResponse
         {
-            token,
-            username = admin.Username,
-            role = admin.Role
-        });
+            Token = token,
+            Username = admin.Username,
+            Role = admin.Role
+        };
+
+        return Ok(ApiResponse<AuthResponse>.Success(response, "Article created successfully."));
     }
 
     private string GenerateJwtToken(AdminUser admin)

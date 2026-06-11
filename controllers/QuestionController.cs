@@ -1,5 +1,6 @@
 using JapaneseLearningApi.Data;
 using JapaneseLearningApi.Models;
+using JapaneseLearningApi.Responses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -70,13 +71,22 @@ public class QuestionController : ControllerBase
             .Take(pageSize)
             .ToListAsync();
 
-        return Ok(new
+        var data = new PagedResult<Question>
         {
-            total,
-            page,
-            pageSize,
-            items
-        });
+            Total = total,
+            Page = page,
+            PageSize = pageSize,
+            Items = items
+        };
+        // return Ok(new
+        // {
+        //     total,
+        //     page,
+        //     pageSize,
+        //     items
+        // });
+
+        return Ok(ApiResponse<PagedResult<Question>>.Success(data));
     }
 
     [HttpGet("{id}")]
@@ -86,10 +96,12 @@ public class QuestionController : ControllerBase
 
         if (question == null)
         {
-            return NotFound();
+            return NotFound(ApiResponse<string>.Fail(404, "Question not found."));
         }
 
-        return Ok(question);
+        // return Ok(question);
+
+        return Ok(ApiResponse<Question>.Success(question, "Searching question successfully."));
     }
 
     [HttpPost]
@@ -98,7 +110,9 @@ public class QuestionController : ControllerBase
         _context.Questions.Add(question);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetQuestion), new { id = question.Id }, question);
+        // return CreatedAtAction(nameof(GetQuestion), new { id = question.Id }, question);
+
+        return Ok(ApiResponse<Question>.Success(question));
     }
 
     [HttpPut("{id}")]
@@ -106,20 +120,23 @@ public class QuestionController : ControllerBase
     {
         if (id != question.Id)
         {
-            return BadRequest();
+            // return BadRequest();
+            return BadRequest(ApiResponse<string>.Fail(404, "Sentence not found."));
         }
 
         var exists = await _context.Questions.AnyAsync(s => s.Id == id);
 
         if (!exists)
         {
-            return NotFound();
+            // return NotFound();
+            return BadRequest(ApiResponse<string>.Fail(404, "Question not found."));
         }
 
         _context.Entry(question).State = EntityState.Modified;
         await _context.SaveChangesAsync();
 
-        return NoContent();
+        // return NoContent();
+        return Ok(ApiResponse.NoContent());
     }
 
     [HttpDelete("{id}")]
@@ -129,13 +146,15 @@ public class QuestionController : ControllerBase
 
         if (question == null)
         {
-            return NotFound();
+            // return NotFound();
+            return BadRequest(ApiResponse<string>.Fail(404, "Sentence not found."));
         }
 
         _context.Questions.Remove(question);
         await _context.SaveChangesAsync();
 
-        return NoContent();
+        // return NoContent();
+        return Ok(ApiResponse.NoContent());
     }
 
 }

@@ -1,5 +1,6 @@
 using JapaneseLearningApi.Data;
 using JapaneseLearningApi.Models;
+using JapaneseLearningApi.Responses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -64,13 +65,24 @@ public class GrammarPointController : ControllerBase
             .Take(pageSize)
             .ToListAsync();
 
-        return Ok(new
+        // return Ok(new
+        // {
+        //     total,
+        //     page,
+        //     pageSize,
+        //     items
+        // });
+
+        var data = new PagedResult<GrammarPoint>
         {
-            total,
-            page,
-            pageSize,
-            items
-        });
+            Total = total,
+            Page = page,
+            PageSize = pageSize,
+            Items = items
+        };
+
+        // return Ok(ApiResponse<GrammarPointResponse>.Success(data, "success"));
+        return Ok(ApiResponse<PagedResult<GrammarPoint>>.Success(data));
     }
 
     [HttpGet("{id}")]
@@ -80,10 +92,11 @@ public class GrammarPointController : ControllerBase
 
         if (grammarPoint == null)
         {
-            return NotFound();
+            return BadRequest(ApiResponse<string>.Fail(404, "Invalid grammarPoint."));
         }
 
-        return Ok(grammarPoint);
+        // return Ok(grammarPoint);
+        return Ok(ApiResponse<GrammarPoint>.Success(grammarPoint, "Searching grammarPoint successfully."));
     }
 
     [HttpPost]
@@ -92,7 +105,9 @@ public class GrammarPointController : ControllerBase
         _context.GrammarPoints.Add(grammarPoint);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetGrammarPoint), new { id = grammarPoint.Id }, grammarPoint);
+        // return CreatedAtAction(nameof(GetGrammarPoint), new { id = grammarPoint.Id }, grammarPoint);
+
+        return Ok(ApiResponse<GrammarPoint>.Success(grammarPoint));
     }
 
     // POST: {sentenceId}/grammar-points/{grammarPointId}
@@ -107,7 +122,8 @@ public class GrammarPointController : ControllerBase
 
         if (!sentenceExists)
         {
-            return NotFound("Sentence not found.");
+            // return NotFound("Sentence not found.");
+            return BadRequest(ApiResponse<string>.Fail(404, "Sentence not found."));
         }
 
         var grammarPointExists = await _context.GrammarPoints
@@ -115,7 +131,8 @@ public class GrammarPointController : ControllerBase
 
         if (!grammarPointExists)
         {
-            return NotFound("Grammar point not found.");
+            // return NotFound("Grammar point not found.");
+            return BadRequest(ApiResponse<string>.Fail(404, "Grammar point not found."));
         }
 
         var relationExists = await _context.SentenceGrammarPoints
@@ -126,7 +143,8 @@ public class GrammarPointController : ControllerBase
 
         if (relationExists)
         {
-            return BadRequest("This grammar point is already linked to the sentence.");
+            // return BadRequest("This grammar point is already linked to the sentence.");
+            return BadRequest(ApiResponse<string>.Fail(400, "This grammar point is already linked to the sentence."));
         }
 
         var relation = new SentenceGrammarPoint
@@ -138,7 +156,10 @@ public class GrammarPointController : ControllerBase
         _context.SentenceGrammarPoints.Add(relation);
         await _context.SaveChangesAsync();
 
-        return Ok("Grammar point linked to sentence successfully.");
+        // return Ok("Grammar point linked to sentence successfully.");
+
+        return Ok(ApiResponse<SentenceGrammarPoint>.Success(relation, "Grammar point linked to sentence successfully."));
+
     }
 
     [HttpPut("{id}")]
@@ -146,20 +167,22 @@ public class GrammarPointController : ControllerBase
     {
         if (id != grammarPoint.Id)
         {
-            return BadRequest();
+            // return BadRequest();
+            return BadRequest(ApiResponse<string>.Fail(400, "This grammar point id is invalid."));
         }
 
         var exists = await _context.GrammarPoints.AnyAsync(s => s.Id == id);
 
         if (!exists)
         {
-            return NotFound();
+            return BadRequest(ApiResponse<string>.Fail(404, "Grammar point not found."));
         }
 
         _context.Entry(grammarPoint).State = EntityState.Modified;
         await _context.SaveChangesAsync();
 
-        return NoContent();
+        // return NoContent();
+        return Ok(ApiResponse<GrammarPoint>.Success(grammarPoint, "GrammarPoint changes successfully."));
     }
 
     [HttpDelete("{id}")]
@@ -169,12 +192,14 @@ public class GrammarPointController : ControllerBase
 
         if (grammarPoint == null)
         {
-            return NotFound();
+            return BadRequest(ApiResponse<string>.Fail(404, "Grammar point not found."));
         }
 
         _context.GrammarPoints.Remove(grammarPoint);
         await _context.SaveChangesAsync();
 
-        return NoContent();
+
+        // return NoContent();
+        return Ok(ApiResponse<GrammarPoint>.Success(grammarPoint, "GrammarPoint removes successfully."));
     }
 }

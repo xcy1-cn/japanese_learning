@@ -1,5 +1,7 @@
 using JapaneseLearningApi.Data;
 using JapaneseLearningApi.Models;
+using JapaneseLearningApi.Requests;
+using JapaneseLearningApi.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -68,19 +70,43 @@ public class ArticleController : ControllerBase
         //CountAsync()统计筛选条件下总共有多少条数据
         var total = await query.CountAsync();
 
-        var items = await query
-            .OrderByDescending(a => a.Id)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+        // var items = await query
+        //     .OrderByDescending(a => a.Id)
+        //     .Skip((page - 1) * pageSize)
+        //     .Take(pageSize)
+        //     .ToListAsync();
 
-        return Ok(new
+        // return Ok(new
+        // {
+        //     total,
+        //     page,
+        //     pageSize,
+        //     items
+        // });
+
+        var items = await query
+    .OrderByDescending(a => a.Id)
+    .Skip((page - 1) * pageSize)
+    .Take(pageSize)
+    .Select(a => new ArticleListItemResponse
+    {
+        Id = a.Id,
+        Title = a.Title,
+        Level = a.Level,
+        Category = a.Category,
+        CreatedAt = a.CreatedAt
+    })
+    .ToListAsync();
+
+        var result = new PagedResult<ArticleListItemResponse>
         {
-            total,
-            page,
-            pageSize,
-            items
-        });
+            Total = total,
+            Page = page,
+            PageSize = pageSize,
+            Items = items
+        };
+
+        return Ok(ApiResponse<PagedResult<ArticleListItemResponse>>.Success(result));
     }
 
     [HttpGet("{id}")]
@@ -90,10 +116,10 @@ public class ArticleController : ControllerBase
 
         if (article == null)
         {
-            return NotFound();
+            return NotFound(ApiResponse<string>.Fail(404, "Article not found."));
         }
 
-        return article;
+        return Ok(ApiResponse<Article>.Success(article));
     }
 
     [HttpGet("{id}/sentences")]
@@ -104,7 +130,7 @@ public class ArticleController : ControllerBase
 
         if (!articleExists)
         {
-            return NotFound("Article not found.");
+            return NotFound(ApiResponse<string>.Fail(404, "Article not found."));
         }
 
         var sentences = await _context.Sentences
@@ -113,15 +139,37 @@ public class ArticleController : ControllerBase
             .ToListAsync();
 
         return Ok(sentences);
+        // return Ok(ApiResponse<Sentence>.Success(sentences));
     }
 
     [HttpPost]
-    public async Task<ActionResult<Article>> CreateArticle(Article article)
+    public async Task<IActionResult> CreateArticle(CreateArticleRequest request)
     {
+        var article = new Article
+        {
+            Title = request.Title,
+            Content = request.Content,
+            Level = request.Level,
+            Category = request.Category,
+            CreatedAt = DateTime.Now,
+            UpdatedAt = DateTime.Now
+        };
+
         _context.Articles.Add(article);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetArticle), new { id = article.Id }, article);
+        var response = new ArticleResponse
+        {
+            Id = article.Id,
+            Title = article.Title,
+            Content = article.Content,
+            Level = article.Level,
+            Category = article.Category,
+            CreatedAt = article.CreatedAt,
+            UpdatedAt = article.UpdatedAt
+        };
+
+        return Ok(ApiResponse<ArticleResponse>.Success(response, "Article created successfully."));
     }
 
     [HttpPut("{id}")]
@@ -129,13 +177,13 @@ public class ArticleController : ControllerBase
     {
         if (id != article.Id)
         {
-            return BadRequest();
+            return BadRequest(ApiResponse<string>.Fail(400, "This article id is invalid."));
         }
 
         _context.Entry(article).State = EntityState.Modified;
         await _context.SaveChangesAsync();
 
-        return NoContent();
+        return Ok(ApiResponse.NoContent());
     }
 
     [HttpDelete("{id}")]
@@ -145,12 +193,12 @@ public class ArticleController : ControllerBase
 
         if (article == null)
         {
-            return NotFound();
+            return BadRequest(ApiResponse<string>.Fail(404, "This article is not exist."));
         }
 
         _context.Articles.Remove(article);
         await _context.SaveChangesAsync();
 
-        return NoContent();
+        return Ok(ApiResponse.NoContent());
     }
 }

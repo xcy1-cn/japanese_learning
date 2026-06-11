@@ -1,5 +1,6 @@
 using JapaneseLearningApi.Data;
 using JapaneseLearningApi.Requests;
+using JapaneseLearningApi.Responses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -61,23 +62,32 @@ public class PublicController : ControllerBase
             .OrderByDescending(a => a.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(a => new
+            .Select(a => new PublicArticleResponse
             {
-                a.Id,
-                a.Title,
-                a.Level,
-                a.Category,
-                a.CreatedAt
+                Id = a.Id,
+                Title = a.Title,
+                Level = a.Level,
+                Category = a.Category,
+                CreatedAt = a.CreatedAt
             })
             .ToListAsync();
 
-        return Ok(new
+        var result = new PagedResult<PublicArticleResponse>
         {
-            total,
-            page,
-            pageSize,
-            items
-        });
+            Total = total,
+            Page = page,
+            PageSize = pageSize,
+            Items = items
+        };
+        // return Ok(new
+        // {
+        //     total,
+        //     page,
+        //     pageSize,
+        //     items
+        // });
+
+        return Ok(ApiResponse<PagedResult<PublicArticleResponse>>.Success(result));
     }
 
     [HttpGet("articles/{id}")]
@@ -85,24 +95,26 @@ public class PublicController : ControllerBase
     {
         var article = await _context.Articles
             .Where(a => a.Id == id)
-            .Select(a => new
+            .Select(a => new PublicArticleDetailResponse
             {
-                a.Id,
-                a.Title,
-                a.Content,
-                a.Level,
-                a.Category,
-                a.CreatedAt,
-                a.UpdatedAt
+                Id = a.Id,
+                Title = a.Title,
+                Content = a.Content,
+                Level = a.Level,
+                Category = a.Category,
+                CreatedAt = a.CreatedAt,
+                UpdatedAt = a.UpdatedAt
             })
             .FirstOrDefaultAsync();
 
         if (article == null)
         {
-            return NotFound("Article not found.");
+            // return NotFound("Article not found.");
+            return BadRequest(ApiResponse<string>.Fail(404, "Article not found."));
         }
 
-        return Ok(article);
+        // return Ok(article);
+        return Ok(ApiResponse<PublicArticleDetailResponse>.Success(article));
     }
 
     [HttpGet("articles/{id}/sentences")]
@@ -113,24 +125,25 @@ public class PublicController : ControllerBase
 
         if (!articleExists)
         {
-            return NotFound("Article not found.");
+            return BadRequest(ApiResponse<string>.Fail(404, "Article not found."));
         }
 
         var sentences = await _context.Sentences
             .Where(s => s.ArticleId == id)
             .OrderBy(s => s.OrderIndex)
-            .Select(s => new
+            .Select(s => new PublicArticleSentencesResponse
             {
-                s.Id,
-                s.ArticleId,
-                s.JapaneseText,
-                s.ChineseText,
-                s.Romaji,
-                s.OrderIndex
+                Id = s.Id,
+                ArticleId = s.ArticleId,
+                JapaneseText = s.JapaneseText,
+                ChineseText = s.ChineseText,
+                Romaji = s.Romaji,
+                OrderIndex = s.OrderIndex
             })
             .ToListAsync();
 
-        return Ok(sentences);
+        // return Ok(sentences);
+        return Ok(ApiResponse<List<PublicArticleSentencesResponse>>.Success(sentences));
     }
 
     [HttpGet("questions")]
@@ -175,28 +188,37 @@ public class PublicController : ControllerBase
             .OrderByDescending(q => q.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(q => new
+            .Select(q => new QuestionDetailResponse
             {
-                q.Id,
-                q.Type,
-                q.Stem,
-                q.OptionA,
-                q.OptionB,
-                q.OptionC,
-                q.OptionD,
-                q.ArticleId,
-                q.SentenceId,
-                q.CreatedAt
+                Id = q.Id,
+                Type = q.Type,
+                Stem = q.Stem,
+                OptionA = q.OptionA,
+                OptionB = q.OptionB,
+                OptionC = q.OptionC,
+                OptionD = q.OptionD,
+                ArticleId = q.ArticleId,
+                SentenceId = q.SentenceId,
+                CreatedAt = q.CreatedAt
             })
             .ToListAsync();
 
-        return Ok(new
+        var result = new PagedResult<QuestionDetailResponse>
         {
-            total,
-            page,
-            pageSize,
-            items
-        });
+            Total = total,
+            Page = page,
+            PageSize = pageSize,
+            Items = items
+        };
+        // return Ok(new
+        // {
+        //     total,
+        //     page,
+        //     pageSize,
+        //     items
+        // });
+
+        return Ok(ApiResponse<PagedResult<QuestionDetailResponse>>.Success(result));
     }
 
     [HttpGet("questions/{id}")]
@@ -204,27 +226,29 @@ public class PublicController : ControllerBase
     {
         var question = await _context.Questions
             .Where(q => q.Id == id)
-            .Select(q => new
+            .Select(q => new QuestionDetailResponse
             {
-                q.Id,
-                q.Type,
-                q.Stem,
-                q.OptionA,
-                q.OptionB,
-                q.OptionC,
-                q.OptionD,
-                q.ArticleId,
-                q.SentenceId,
-                q.CreatedAt
+                Id = q.Id,
+                Type = q.Type,
+                Stem = q.Stem,
+                OptionA = q.OptionA,
+                OptionB = q.OptionB,
+                OptionC = q.OptionC,
+                OptionD = q.OptionD,
+                ArticleId = q.ArticleId,
+                SentenceId = q.SentenceId,
+                CreatedAt = q.CreatedAt
             })
             .FirstOrDefaultAsync();
 
         if (question == null)
         {
-            return NotFound("Question not found.");
+            // return NotFound("Question not found.");
+            return BadRequest(ApiResponse<string>.Fail(404, "Question not found."));
         }
 
-        return Ok(question);
+        // return Ok(question);
+        return Ok(ApiResponse<QuestionDetailResponse>.Success(question));
     }
 
     [HttpPost("questions/{id}/submit")]
@@ -238,12 +262,14 @@ public class PublicController : ControllerBase
 
         if (question == null)
         {
-            return NotFound("Question not found.");
+            // return NotFound("Question not found.");
+            return BadRequest(ApiResponse<string>.Fail(404, "Question not found."));
         }
 
         if (string.IsNullOrWhiteSpace(request.Answer))
         {
-            return BadRequest("Answer is required.");
+            // return BadRequest("Answer is required.");
+            return BadRequest(ApiResponse<string>.Fail(400, "Answer is required."));
         }
 
         var userAnswer = request.Answer.Trim().ToUpper();
@@ -251,11 +277,13 @@ public class PublicController : ControllerBase
 
         var isCorrect = userAnswer == correctAnswer;
 
-        return Ok(new
+        var result = new SubmitAnswerResponse
         {
-            isCorrect,
-            correctAnswer = question.Answer,
-            explanation = question.Explanation
-        });
+            IsCorrect = isCorrect,
+            CorrectAnswer = question.Answer,
+            Explanation = question.Explanation
+        };
+
+        return Ok(ApiResponse<SubmitAnswerResponse>.Success(result));
     }
 }

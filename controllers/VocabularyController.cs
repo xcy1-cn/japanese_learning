@@ -1,5 +1,6 @@
 using JapaneseLearningApi.Data;
 using JapaneseLearningApi.Models;
+using JapaneseLearningApi.Responses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -70,13 +71,22 @@ public class VocabularyController : ControllerBase
             .Take(pageSize)
             .ToListAsync();
 
-        return Ok(new
+        var result = new PagedResult<Vocabulary>
         {
-            total,
-            page,
-            pageSize,
-            items
-        });
+            Total = total,
+            Page = page,
+            PageSize = pageSize,
+            Items = items
+        };
+        // return Ok(new
+        // {
+        //     total,
+        //     page,
+        //     pageSize,
+        //     items
+        // });
+
+        return Ok(ApiResponse<PagedResult<Vocabulary>>.Success(result));
     }
 
     [HttpGet("{id}")]
@@ -86,10 +96,11 @@ public class VocabularyController : ControllerBase
 
         if (vocabulary == null)
         {
-            return NotFound();
+            return NotFound(ApiResponse<string>.Fail(404, "Vocabulary not found."));
         }
 
-        return Ok(vocabulary);
+        // return Ok(vocabulary);
+        return Ok(ApiResponse<Vocabulary>.Success(vocabulary));
     }
 
     [HttpPost]
@@ -98,7 +109,9 @@ public class VocabularyController : ControllerBase
         _context.Vocabularies.Add(vocabulary);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetVocabulary), new { id = vocabulary.Id }, vocabulary);
+        // return CreatedAtAction(nameof(GetVocabulary), new { id = vocabulary.Id }, vocabulary);
+
+        return Ok(ApiResponse<Vocabulary>.Success(vocabulary, "Vocabulary created successfully."));
     }
 
     [HttpPut("{id}")]
@@ -106,20 +119,20 @@ public class VocabularyController : ControllerBase
     {
         if ( id != vocabulary.Id)
         {
-            return BadRequest();
+            return BadRequest(ApiResponse<string>.Fail(400, "This vocabulary id is invalid."));
         }
 
         var exists = await _context.Vocabularies.AnyAsync(s => s.Id == id);
 
         if (!exists)
         {
-            return NotFound();
+            return NotFound(ApiResponse<string>.Fail(404, "Vocabulary not found."));
         }
 
         _context.Entry(vocabulary).State = EntityState.Modified;
         await _context.SaveChangesAsync();
 
-        return NoContent();
+        return Ok(ApiResponse.NoContent());
     }
 
     [HttpDelete("{id}")]
@@ -129,12 +142,12 @@ public class VocabularyController : ControllerBase
 
         if (vocabulary == null)
         {
-            return NotFound();
+            return NotFound(ApiResponse<string>.Fail(404, "Vocabulary not found."));
         }
 
         _context.Vocabularies.Remove(vocabulary);
         await _context.SaveChangesAsync();
 
-        return NoContent();
+        return Ok(ApiResponse.NoContent());
     }
 }

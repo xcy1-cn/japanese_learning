@@ -1,5 +1,6 @@
 using JapaneseLearningApi.Data;
 using JapaneseLearningApi.Models;
+using JapaneseLearningApi.Responses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -64,13 +65,23 @@ public class SentenceController : ControllerBase
             .Take(pageSize)
             .ToListAsync();
 
-        return Ok(new
+        var result = new PagedResult<Sentence>
         {
-            total,
-            page,
-            pageSize,
-            items
-        });
+            Total = total,
+            Page = page,
+            PageSize = pageSize,
+            Items = items
+        };
+
+        // return Ok(new
+        // {
+        //     total,
+        //     page,
+        //     pageSize,
+        //     items
+        // });
+
+        return Ok(ApiResponse<PagedResult<Sentence>>.Success(result));
     }
 
     // GET: api/Sentence/1
@@ -82,10 +93,11 @@ public class SentenceController : ControllerBase
 
         if (sentence == null)
         {
-            return NotFound();
+            return BadRequest(ApiResponse<string>.Fail(404, "This sentence is not exist."));
         }
 
-        return Ok(sentence);
+        // return Ok(sentence);
+        return Ok(ApiResponse<Sentence>.Success(sentence));
     }
 
     //  GET: api/Sentence/1/detail
@@ -94,44 +106,45 @@ public class SentenceController : ControllerBase
     {
         var sentence = await _context.Sentences
             .Where(s => s.Id == id)
-            .Select(s => new
+            .Select(s => new SentenceDetailResponse
             {
-                s.Id,
-                s.ArticleId,
-                s.JapaneseText,
-                s.ChineseText,
-                s.Romaji,
-                s.OrderIndex,
-                s.CreatedAt,
+                Id = s.Id,
+                ArticleId = s.ArticleId,
+                JapaneseText = s.JapaneseText,
+                ChineseText = s.ChineseText,
+                Romaji = s.Romaji,
+                OrderIndex = s.OrderIndex,
+                CreatedAt = s.CreatedAt,
 
-                Vocabularies = s.SentenceVocabularies.Select(sv => new
+                Vocabularies = s.SentenceVocabularies.Select(sv => new SentenceVocabularyResponse
                 {
-                    sv.Vocabulary!.Id,
-                    sv.Vocabulary.Word,
-                    sv.Vocabulary.Reading,
-                    sv.Vocabulary.Meaning,
-                    sv.Vocabulary.PartOfSpeech,
-                    sv.Vocabulary.Level
+                    Id = sv.Vocabulary!.Id,
+                    Word = sv.Vocabulary.Word,
+                    Reading = sv.Vocabulary.Reading,
+                    Meaning = sv.Vocabulary.Meaning,
+                    PartOfSpeech = sv.Vocabulary.PartOfSpeech,
+                    Level = sv.Vocabulary.Level
                 }).ToList(),
 
-                GrammarPoints = s.SentenceGrammarPoints.Select(sg => new
+                GrammarPoints = s.SentenceGrammarPoints.Select(sg => new SentenceGrammarPointResponse
                 {
-                    sg.GrammarPoint!.Id,
-                    sg.GrammarPoint.Title,
-                    sg.GrammarPoint.Explanation,
-                    sg.GrammarPoint.Structure,
-                    sg.GrammarPoint.Example,
-                    sg.GrammarPoint.Level
+                    Id = sg.GrammarPoint!.Id,
+                    Title = sg.GrammarPoint.Title,
+                    Explanation = sg.GrammarPoint.Explanation,
+                    Structure = sg.GrammarPoint.Structure,
+                    Example = sg.GrammarPoint.Example,
+                    Level = sg.GrammarPoint.Level
                 }).ToList()
             })
-            .FirstOrDefaultAsync();
+.FirstOrDefaultAsync();
 
         if (sentence == null)
         {
-            return NotFound("Sentence not found.");
+            return NotFound(ApiResponse<string>.Fail(404, "Article not found."));
         }
 
-        return Ok(sentence);
+        // return Ok(sentence);
+        return Ok(ApiResponse<SentenceDetailResponse>.Success(sentence));
     }
 
     //  POST: api/Sentence/1/vocabularies/{vocabularyId}
@@ -146,7 +159,7 @@ public class SentenceController : ControllerBase
 
         if (!sentenceExists)
         {
-            return NotFound("Sentence not found.");
+            return NotFound(ApiResponse<string>.Fail(404, "Sentence not found."));
         }
 
         var vocabularyExists = await _context.Vocabularies
@@ -154,7 +167,7 @@ public class SentenceController : ControllerBase
 
         if (!vocabularyExists)
         {
-            return NotFound("Vocabulary not found.");
+            return NotFound(ApiResponse<string>.Fail(404, "Vocabulary not found."));
         }
 
         var relationExists = await _context.SentenceVocabularies
@@ -165,7 +178,8 @@ public class SentenceController : ControllerBase
 
         if (relationExists)
         {
-            return BadRequest("This vocabulary is already linked to the sentence.");
+            // return BadRequest("This vocabulary is already linked to the sentence.");
+            return BadRequest(ApiResponse<string>.Fail(400, "This vocabulary is already linked to the sentence."));
         }
 
         var relation = new SentenceVocabulary
@@ -177,7 +191,9 @@ public class SentenceController : ControllerBase
         _context.SentenceVocabularies.Add(relation);
         await _context.SaveChangesAsync();
 
-        return Ok("Vocabulary linked to sentence successfully.");
+        // return Ok("Vocabulary linked to sentence successfully.");
+
+        return Ok(ApiResponse.NoContent(message: "Vocabulary linked to sentence successfully."));
     }
 
     // POST: api/Sentence
@@ -189,17 +205,20 @@ public class SentenceController : ControllerBase
 
         if (!articleExists)
         {
-            return BadRequest("ArticleId does not exist.");
+            // return BadRequest("ArticleId does not exist.");
+            return BadRequest(ApiResponse<string>.Fail(400, "ArticleId does not exist."));
         }
 
         _context.Sentences.Add(sentence);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(
-            nameof(GetSentence),
-            new { id = sentence.Id },
-            sentence
-        );
+        // return CreatedAtAction(
+        //     nameof(GetSentence),
+        //     new { id = sentence.Id },
+        //     sentence
+        // );
+
+        return Ok(ApiResponse<Sentence>.Success(sentence));
     }
 
     [HttpPost("{sentenceId}/grammar-points/{grammarPointId}")]
@@ -213,7 +232,8 @@ public class SentenceController : ControllerBase
 
         if (!sentenceExists)
         {
-            return NotFound("Sentence not found.");
+            // return NotFound("Sentence not found.");
+            return NotFound(ApiResponse<string>.Fail(404, "Sentence not found."));
         }
 
         var grammarPointExists = await _context.GrammarPoints
@@ -221,7 +241,8 @@ public class SentenceController : ControllerBase
 
         if (!grammarPointExists)
         {
-            return NotFound("Grammar point not found.");
+            // return NotFound("Grammar point not found.");
+            return BadRequest(ApiResponse<string>.Fail(404, "Grammar point not found."));
         }
 
         var relationExists = await _context.SentenceGrammarPoints
@@ -232,7 +253,8 @@ public class SentenceController : ControllerBase
 
         if (relationExists)
         {
-            return BadRequest("This grammar point is already linked to the sentence.");
+            // return BadRequest("This grammar point is already linked to the sentence.");
+            return BadRequest(ApiResponse<string>.Fail(400, "This grammar point is already linked to the sentence."));
         }
 
         var relation = new SentenceGrammarPoint
@@ -244,7 +266,8 @@ public class SentenceController : ControllerBase
         _context.SentenceGrammarPoints.Add(relation);
         await _context.SaveChangesAsync();
 
-        return Ok("Grammar point linked to sentence successfully.");
+        // return Ok("Grammar point linked to sentence successfully.");
+        return Ok(ApiResponse.NoContent(message: "Grammar point linked to sentence successfully."));
     }
 
     // PUT: api/Sentence/1
@@ -253,7 +276,8 @@ public class SentenceController : ControllerBase
     {
         if (id != sentence.Id)
         {
-            return BadRequest("Route id and sentence id are not the same.");
+            // return BadRequest("Route id and sentence id are not the same.");
+            return BadRequest(ApiResponse<string>.Fail(400, "Route id and sentence id are not the same."));
         }
 
         var articleExists = await _context.Articles
@@ -261,7 +285,8 @@ public class SentenceController : ControllerBase
 
         if (!articleExists)
         {
-            return BadRequest("ArticleId does not exist.");
+            // return BadRequest("ArticleId does not exist.");
+            return BadRequest(ApiResponse<string>.Fail(400, "ArticleId does not exist."));
         }
 
         var exists = await _context.Sentences
@@ -269,13 +294,15 @@ public class SentenceController : ControllerBase
 
         if (!exists)
         {
-            return NotFound();
+            // return NotFound();
+            return NotFound(ApiResponse<string>.Fail(404, "Article not found."));
         }
 
         _context.Entry(sentence).State = EntityState.Modified;
         await _context.SaveChangesAsync();
 
-        return NoContent();
+        // return NoContent();
+        return Ok(ApiResponse.NoContent());
     }
 
     // DELETE: api/Sentence/1
@@ -286,13 +313,15 @@ public class SentenceController : ControllerBase
 
         if (sentence == null)
         {
-            return NotFound();
+            // return NotFound();
+            return NotFound(ApiResponse<string>.Fail(404, "Sentence not found."));
         }
 
         _context.Sentences.Remove(sentence);
         await _context.SaveChangesAsync();
 
-        return NoContent();
+        // return NoContent();
+        return Ok(ApiResponse.NoContent());
     }
 
     // DELETE: api/Sentence/1/vocabularies/{vocabularyId}
@@ -310,13 +339,15 @@ public class SentenceController : ControllerBase
 
         if (relation == null)
         {
-            return NotFound("Relation not found.");
+            // return NotFound("Relation not found.");
+            return BadRequest(ApiResponse<string>.Fail(404, "Relation not found."));
         }
 
         _context.SentenceVocabularies.Remove(relation);
         await _context.SaveChangesAsync();
 
-        return NoContent();
+        // return NoContent();
+        return Ok(ApiResponse.NoContent());
     }
 
     // DELETE: api/Sentence/{sentenceId}/grammar-points/{grammarPointId}
@@ -334,12 +365,14 @@ public class SentenceController : ControllerBase
 
         if (relation == null)
         {
-            return NotFound("Relation not found.");
+            // return NotFound("Relation not found.");
+            return BadRequest(ApiResponse<string>.Fail(404, "Relation not found."));
         }
 
         _context.SentenceGrammarPoints.Remove(relation);
         await _context.SaveChangesAsync();
 
-        return NoContent();
+        // return NoContent();
+        return Ok(ApiResponse.NoContent());
     }
 }
