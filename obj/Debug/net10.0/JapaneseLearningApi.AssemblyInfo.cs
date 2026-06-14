@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("JapaneseLearningApi")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a836b1bdf778b87d944b8a9d8a2a3a5ffb63d15b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+48d31db31b7a9e3f441f03f183cc107c763861ac")]
 [assembly: System.Reflection.AssemblyProductAttribute("JapaneseLearningApi")]
 [assembly: System.Reflection.AssemblyTitleAttribute("JapaneseLearningApi")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

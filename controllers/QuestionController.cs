@@ -1,12 +1,14 @@
 using JapaneseLearningApi.Data;
 using JapaneseLearningApi.Models;
 using JapaneseLearningApi.Responses;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace JapaneseLearningApi.Controllers;
 
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class QuestionController : ControllerBase
@@ -105,7 +107,7 @@ public class QuestionController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Question>> CreateVocabulary(Question question)
+    public async Task<ActionResult<Question>> CreateQuestion(Question question)
     {
         _context.Questions.Add(question);
         await _context.SaveChangesAsync();
@@ -116,7 +118,7 @@ public class QuestionController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<Question>> UpdateVocabulary(int id, Question question)
+    public async Task<ActionResult<Question>> UpdateQuestion(int id, Question question)
     {
         if (id != question.Id)
         {
