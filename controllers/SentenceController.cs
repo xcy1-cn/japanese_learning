@@ -140,7 +140,7 @@ public class SentenceController : ControllerBase
 
         if (sentence == null)
         {
-            return NotFound(ApiResponse<string>.Fail(404, "Article not found."));
+            return NotFound(ApiResponse<string>.Fail(404, "Sentence not found."));
         }
 
         // return Ok(sentence);
