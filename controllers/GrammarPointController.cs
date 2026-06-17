@@ -1,6 +1,7 @@
 using JapaneseLearningApi.Data;
 using JapaneseLearningApi.Models;
 using JapaneseLearningApi.Responses;
+using JapaneseLearningApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,10 +12,15 @@ namespace JapaneseLearningApi.Controllers;
 public class GrammarPointController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly PublicCacheInvalidationService _publicCacheInvalidationService;
 
-    public GrammarPointController(AppDbContext context)
+    public GrammarPointController(
+        AppDbContext context,
+        PublicCacheInvalidationService publicCacheInvalidationService
+    )
     {
         _context = context;
+        _publicCacheInvalidationService = publicCacheInvalidationService;
     }
 
     [HttpGet]
@@ -104,6 +110,7 @@ public class GrammarPointController : ControllerBase
     {
         _context.GrammarPoints.Add(grammarPoint);
         await _context.SaveChangesAsync();
+        _publicCacheInvalidationService.InvalidateArticles();
 
         // return CreatedAtAction(nameof(GetGrammarPoint), new { id = grammarPoint.Id }, grammarPoint);
 
@@ -155,6 +162,7 @@ public class GrammarPointController : ControllerBase
 
         _context.SentenceGrammarPoints.Add(relation);
         await _context.SaveChangesAsync();
+        _publicCacheInvalidationService.InvalidateArticles();
 
         // return Ok("Grammar point linked to sentence successfully.");
 
@@ -180,6 +188,7 @@ public class GrammarPointController : ControllerBase
 
         _context.Entry(grammarPoint).State = EntityState.Modified;
         await _context.SaveChangesAsync();
+        _publicCacheInvalidationService.InvalidateArticles();
 
         // return NoContent();
         return Ok(ApiResponse<GrammarPoint>.Success(grammarPoint, "GrammarPoint changes successfully."));
@@ -197,7 +206,7 @@ public class GrammarPointController : ControllerBase
 
         _context.GrammarPoints.Remove(grammarPoint);
         await _context.SaveChangesAsync();
-
+        _publicCacheInvalidationService.InvalidateArticles();
 
         // return NoContent();
         return Ok(ApiResponse<GrammarPoint>.Success(grammarPoint, "GrammarPoint removes successfully."));

@@ -1,6 +1,7 @@
 using JapaneseLearningApi.Data;
 using JapaneseLearningApi.Models;
 using JapaneseLearningApi.Responses;
+using JapaneseLearningApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,10 +12,14 @@ namespace JapaneseLearningApi.Controllers;
 public class SentenceController : ControllerBase
 {
     private readonly AppDbContext _context;
-
-    public SentenceController(AppDbContext context)
+    private readonly PublicCacheInvalidationService _publicCacheInvalidationService;
+    public SentenceController(
+        AppDbContext context,
+        PublicCacheInvalidationService publicCacheInvalidationService
+    )
     {
         _context = context;
+        _publicCacheInvalidationService = publicCacheInvalidationService;
     }
 
     // GET: api/Sentence
@@ -190,6 +195,7 @@ public class SentenceController : ControllerBase
 
         _context.SentenceVocabularies.Add(relation);
         await _context.SaveChangesAsync();
+        _publicCacheInvalidationService.InvalidateArticles();
 
         // return Ok("Vocabulary linked to sentence successfully.");
 
@@ -211,6 +217,7 @@ public class SentenceController : ControllerBase
 
         _context.Sentences.Add(sentence);
         await _context.SaveChangesAsync();
+        _publicCacheInvalidationService.InvalidateArticles();
 
         // return CreatedAtAction(
         //     nameof(GetSentence),
@@ -265,6 +272,7 @@ public class SentenceController : ControllerBase
 
         _context.SentenceGrammarPoints.Add(relation);
         await _context.SaveChangesAsync();
+        _publicCacheInvalidationService.InvalidateArticles();
 
         // return Ok("Grammar point linked to sentence successfully.");
         return Ok(ApiResponse.NoContent(message: "Grammar point linked to sentence successfully."));
@@ -300,6 +308,7 @@ public class SentenceController : ControllerBase
 
         _context.Entry(sentence).State = EntityState.Modified;
         await _context.SaveChangesAsync();
+        _publicCacheInvalidationService.InvalidateArticles();
 
         // return NoContent();
         return Ok(ApiResponse.NoContent());
@@ -319,6 +328,7 @@ public class SentenceController : ControllerBase
 
         _context.Sentences.Remove(sentence);
         await _context.SaveChangesAsync();
+        _publicCacheInvalidationService.InvalidateArticles();
 
         // return NoContent();
         return Ok(ApiResponse.NoContent());
@@ -345,6 +355,7 @@ public class SentenceController : ControllerBase
 
         _context.SentenceVocabularies.Remove(relation);
         await _context.SaveChangesAsync();
+        _publicCacheInvalidationService.InvalidateArticles();
 
         // return NoContent();
         return Ok(ApiResponse.NoContent());
@@ -371,6 +382,7 @@ public class SentenceController : ControllerBase
 
         _context.SentenceGrammarPoints.Remove(relation);
         await _context.SaveChangesAsync();
+        _publicCacheInvalidationService.InvalidateArticles();
 
         // return NoContent();
         return Ok(ApiResponse.NoContent());

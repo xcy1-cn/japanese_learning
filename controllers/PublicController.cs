@@ -1,6 +1,7 @@
 using JapaneseLearningApi.Data;
 using JapaneseLearningApi.Requests;
 using JapaneseLearningApi.Responses;
+using JapaneseLearningApi.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -17,6 +18,23 @@ public class PublicController : ControllerBase
 
     private static readonly TimeSpan PublicCacheDuration = TimeSpan.FromMinutes(5);
 
+    private int GetArticlesCacheVersion()
+    {
+        return _cache.GetOrCreate(PublicCacheKeys.ArticlesVersion, entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(12);
+            return 1;
+        });
+    }
+
+    private int GetQuestionsCacheVersion()
+    {
+        return _cache.GetOrCreate(PublicCacheKeys.QuestionsVersion, entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(12);
+            return 1;
+        });
+    }
     public PublicController(AppDbContext context, IMemoryCache cache)
     {
         _context = context;
@@ -42,8 +60,16 @@ public class PublicController : ControllerBase
             pageSize = 10;
         }
 
-        var cacheKey =
-            $"public:articles:keyword={keyword ?? ""}:level={level ?? ""}:category={category ?? ""}:page={page}:pageSize={pageSize}";
+        var version = GetArticlesCacheVersion();
+
+        var cacheKey = PublicCacheKeys.ArticleList(
+            keyword,
+            level,
+            category,
+            page,
+            pageSize,
+            version
+        );
 
         if (_cache.TryGetValue(cacheKey, out PagedResult<PublicArticleResponse>? cachedResult))
         {
@@ -107,7 +133,9 @@ public class PublicController : ControllerBase
     [HttpGet("articles/{id}")]
     public async Task<IActionResult> GetArticleDetail(int id)
     {
-        var cacheKey = $"public:articles:detail:{id}";
+        var version = GetArticlesCacheVersion();
+
+        var cacheKey = PublicCacheKeys.ArticleDetail(id, version);
 
         if (_cache.TryGetValue(cacheKey, out PublicArticleDetailResponse? cachedArticle))
         {
@@ -145,7 +173,9 @@ public class PublicController : ControllerBase
     [HttpGet("articles/{id}/sentences")]
     public async Task<IActionResult> GetArticleSentences(int id)
     {
-        var cacheKey = $"public:articles:{id}:sentences";
+        var version = GetArticlesCacheVersion();
+
+        var cacheKey = PublicCacheKeys.ArticleSentences(id, version);
 
         if (_cache.TryGetValue(cacheKey, out List<PublicArticleSentencesResponse>? cachedSentences))
         {
@@ -202,8 +232,15 @@ public class PublicController : ControllerBase
             pageSize = 10;
         }
 
-        var cacheKey =
-            $"public:questions:type={type ?? ""}:keyword={keyword ?? ""}:page={page}:pageSize={pageSize}";
+        var version = GetQuestionsCacheVersion();
+
+        var cacheKey = PublicCacheKeys.QuestionList(
+            type,
+            keyword,
+            page,
+            pageSize,
+            version
+        );
 
         if (_cache.TryGetValue(cacheKey, out PagedResult<QuestionDetailResponse>? cachedResult))
         {
@@ -270,7 +307,9 @@ public class PublicController : ControllerBase
     [HttpGet("questions/{id}")]
     public async Task<IActionResult> GetQuestionDetail(int id)
     {
-        var cacheKey = $"public:questions:detail:{id}";
+        var version = GetQuestionsCacheVersion();
+
+        var cacheKey = PublicCacheKeys.QuestionDetail(id, version);
 
         if (_cache.TryGetValue(cacheKey, out QuestionDetailResponse? cachedQuestion))
         {

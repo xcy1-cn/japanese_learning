@@ -1,6 +1,7 @@
 using JapaneseLearningApi.Data;
 using JapaneseLearningApi.Models;
 using JapaneseLearningApi.Responses;
+using JapaneseLearningApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,10 +15,15 @@ namespace JapaneseLearningApi.Controllers;
 public class QuestionController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly PublicCacheInvalidationService _publicCacheInvalidationService;
 
-    public QuestionController(AppDbContext context)
+    public QuestionController(
+        AppDbContext context,
+        PublicCacheInvalidationService publicCacheInvalidationService
+    )
     {
         _context = context;
+        _publicCacheInvalidationService = publicCacheInvalidationService;
     }
 
     [HttpGet]
@@ -111,6 +117,7 @@ public class QuestionController : ControllerBase
     {
         _context.Questions.Add(question);
         await _context.SaveChangesAsync();
+        _publicCacheInvalidationService.InvalidateQuestions();
 
         // return CreatedAtAction(nameof(GetQuestion), new { id = question.Id }, question);
 
@@ -136,6 +143,7 @@ public class QuestionController : ControllerBase
 
         _context.Entry(question).State = EntityState.Modified;
         await _context.SaveChangesAsync();
+        _publicCacheInvalidationService.InvalidateQuestions();
 
         // return NoContent();
         return Ok(ApiResponse.NoContent());
@@ -149,11 +157,12 @@ public class QuestionController : ControllerBase
         if (question == null)
         {
             // return NotFound();
-            return BadRequest(ApiResponse<string>.Fail(404, "Sentence not found."));
+            return NotFound(ApiResponse<string>.Fail(404, "Question not found."));
         }
 
         _context.Questions.Remove(question);
         await _context.SaveChangesAsync();
+        _publicCacheInvalidationService.InvalidateQuestions();
 
         // return NoContent();
         return Ok(ApiResponse.NoContent());

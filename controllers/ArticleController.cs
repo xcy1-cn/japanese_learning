@@ -2,6 +2,7 @@ using JapaneseLearningApi.Data;
 using JapaneseLearningApi.Models;
 using JapaneseLearningApi.Requests;
 using JapaneseLearningApi.Responses;
+using JapaneseLearningApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,10 +15,15 @@ namespace JapaneseLearningApi.Controllers;
 public class ArticleController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly PublicCacheInvalidationService _publicCacheInvalidationService;
 
-    public ArticleController(AppDbContext context)
+    public ArticleController(
+    AppDbContext context,
+    PublicCacheInvalidationService publicCacheInvalidationService
+)
     {
         _context = context;
+        _publicCacheInvalidationService = publicCacheInvalidationService;
     }
 
     [HttpGet]
@@ -157,6 +163,7 @@ public class ArticleController : ControllerBase
 
         _context.Articles.Add(article);
         await _context.SaveChangesAsync();
+        _publicCacheInvalidationService.InvalidateArticles();
 
         var response = new ArticleResponse
         {
@@ -182,6 +189,7 @@ public class ArticleController : ControllerBase
 
         _context.Entry(article).State = EntityState.Modified;
         await _context.SaveChangesAsync();
+        _publicCacheInvalidationService.InvalidateArticles();
 
         return Ok(ApiResponse.NoContent());
     }
@@ -198,6 +206,7 @@ public class ArticleController : ControllerBase
 
         _context.Articles.Remove(article);
         await _context.SaveChangesAsync();
+        _publicCacheInvalidationService.InvalidateArticles();
 
         return Ok(ApiResponse.NoContent());
     }

@@ -1,6 +1,7 @@
 using JapaneseLearningApi.Data;
 using JapaneseLearningApi.Models;
 using JapaneseLearningApi.Responses;
+using JapaneseLearningApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,10 +12,15 @@ namespace JapaneseLearningApi.Controllers;
 public class VocabularyController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly PublicCacheInvalidationService _publicCacheInvalidationService;
 
-    public VocabularyController(AppDbContext context)
+    public VocabularyController(
+        AppDbContext context,
+        PublicCacheInvalidationService publicCacheInvalidationService
+    )
     {
         _context = context;
+        _publicCacheInvalidationService = publicCacheInvalidationService;
     }
 
     [HttpGet]
@@ -108,6 +114,7 @@ public class VocabularyController : ControllerBase
     {
         _context.Vocabularies.Add(vocabulary);
         await _context.SaveChangesAsync();
+        _publicCacheInvalidationService.InvalidateArticles();
 
         // return CreatedAtAction(nameof(GetVocabulary), new { id = vocabulary.Id }, vocabulary);
 
@@ -131,6 +138,7 @@ public class VocabularyController : ControllerBase
 
         _context.Entry(vocabulary).State = EntityState.Modified;
         await _context.SaveChangesAsync();
+        _publicCacheInvalidationService.InvalidateArticles();
 
         return Ok(ApiResponse.NoContent());
     }
@@ -147,6 +155,7 @@ public class VocabularyController : ControllerBase
 
         _context.Vocabularies.Remove(vocabulary);
         await _context.SaveChangesAsync();
+        _publicCacheInvalidationService.InvalidateArticles();
 
         return Ok(ApiResponse.NoContent());
     }

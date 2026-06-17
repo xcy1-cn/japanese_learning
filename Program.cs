@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 // 3.seed
 using JapaneseLearningApi.Models;
 using Microsoft.AspNetCore.Identity;
+using JapaneseLearningApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -70,6 +71,7 @@ builder.Services.AddCors(options =>
 
 // memory 
 builder.Services.AddMemoryCache();
+builder.Services.AddScoped<PublicCacheInvalidationService>();
 
 var app = builder.Build();
 
