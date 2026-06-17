@@ -3,6 +3,8 @@ using JapaneseLearningApi.Requests;
 using JapaneseLearningApi.Responses;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+
 
 namespace JapaneseLearningApi.Controllers;
 
@@ -11,10 +13,14 @@ namespace JapaneseLearningApi.Controllers;
 public class PublicController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly IMemoryCache _cache;
 
-    public PublicController(AppDbContext context)
+    private static readonly TimeSpan PublicCacheDuration = TimeSpan.FromMinutes(5);
+
+    public PublicController(AppDbContext context, IMemoryCache cache)
     {
         _context = context;
+        _cache = cache;
     }
 
     [HttpGet("articles")]
@@ -36,7 +42,20 @@ public class PublicController : ControllerBase
             pageSize = 10;
         }
 
-        var query = _context.Articles.AsQueryable();
+        var cacheKey =
+            $"public:articles:keyword={keyword ?? ""}:level={level ?? ""}:category={category ?? ""}:page={page}:pageSize={pageSize}";
+
+        if (_cache.TryGetValue(cacheKey, out PagedResult<PublicArticleResponse>? cachedResult))
+        {
+            return Ok(ApiResponse<PagedResult<PublicArticleResponse>>.Success(
+                cachedResult!,
+                "Success from memory cache."
+            ));
+        }
+
+        var query = _context.Articles
+            .AsNoTracking()
+            .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(keyword))
         {
@@ -79,13 +98,8 @@ public class PublicController : ControllerBase
             PageSize = pageSize,
             Items = items
         };
-        // return Ok(new
-        // {
-        //     total,
-        //     page,
-        //     pageSize,
-        //     items
-        // });
+
+        _cache.Set(cacheKey, result, PublicCacheDuration);
 
         return Ok(ApiResponse<PagedResult<PublicArticleResponse>>.Success(result));
     }
@@ -93,7 +107,18 @@ public class PublicController : ControllerBase
     [HttpGet("articles/{id}")]
     public async Task<IActionResult> GetArticleDetail(int id)
     {
+        var cacheKey = $"public:articles:detail:{id}";
+
+        if (_cache.TryGetValue(cacheKey, out PublicArticleDetailResponse? cachedArticle))
+        {
+            return Ok(ApiResponse<PublicArticleDetailResponse>.Success(
+                cachedArticle!,
+                "Success from memory cache."
+            ));
+        }
+
         var article = await _context.Articles
+            .AsNoTracking()
             .Where(a => a.Id == id)
             .Select(a => new PublicArticleDetailResponse
             {
@@ -109,26 +134,38 @@ public class PublicController : ControllerBase
 
         if (article == null)
         {
-            // return NotFound("Article not found.");
-            return BadRequest(ApiResponse<string>.Fail(404, "Article not found."));
+            return NotFound(ApiResponse<string>.Fail(404, "Article not found."));
         }
 
-        // return Ok(article);
+        _cache.Set(cacheKey, article, PublicCacheDuration);
+
         return Ok(ApiResponse<PublicArticleDetailResponse>.Success(article));
     }
 
     [HttpGet("articles/{id}/sentences")]
     public async Task<IActionResult> GetArticleSentences(int id)
     {
+        var cacheKey = $"public:articles:{id}:sentences";
+
+        if (_cache.TryGetValue(cacheKey, out List<PublicArticleSentencesResponse>? cachedSentences))
+        {
+            return Ok(ApiResponse<List<PublicArticleSentencesResponse>>.Success(
+                cachedSentences!,
+                "Success from memory cache."
+            ));
+        }
+
         var articleExists = await _context.Articles
+            .AsNoTracking()
             .AnyAsync(a => a.Id == id);
 
         if (!articleExists)
         {
-            return BadRequest(ApiResponse<string>.Fail(404, "Article not found."));
+            return NotFound(ApiResponse<string>.Fail(404, "Article not found."));
         }
 
         var sentences = await _context.Sentences
+            .AsNoTracking()
             .Where(s => s.ArticleId == id)
             .OrderBy(s => s.OrderIndex)
             .Select(s => new PublicArticleSentencesResponse
@@ -142,7 +179,8 @@ public class PublicController : ControllerBase
             })
             .ToListAsync();
 
-        // return Ok(sentences);
+        _cache.Set(cacheKey, sentences, PublicCacheDuration);
+
         return Ok(ApiResponse<List<PublicArticleSentencesResponse>>.Success(sentences));
     }
 
@@ -164,7 +202,20 @@ public class PublicController : ControllerBase
             pageSize = 10;
         }
 
-        var query = _context.Questions.AsQueryable();
+        var cacheKey =
+            $"public:questions:type={type ?? ""}:keyword={keyword ?? ""}:page={page}:pageSize={pageSize}";
+
+        if (_cache.TryGetValue(cacheKey, out PagedResult<QuestionDetailResponse>? cachedResult))
+        {
+            return Ok(ApiResponse<PagedResult<QuestionDetailResponse>>.Success(
+                cachedResult!,
+                "Success from memory cache."
+            ));
+        }
+
+        var query = _context.Questions
+            .AsNoTracking()
+            .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(type))
         {
@@ -210,13 +261,8 @@ public class PublicController : ControllerBase
             PageSize = pageSize,
             Items = items
         };
-        // return Ok(new
-        // {
-        //     total,
-        //     page,
-        //     pageSize,
-        //     items
-        // });
+
+        _cache.Set(cacheKey, result, PublicCacheDuration);
 
         return Ok(ApiResponse<PagedResult<QuestionDetailResponse>>.Success(result));
     }
@@ -224,7 +270,18 @@ public class PublicController : ControllerBase
     [HttpGet("questions/{id}")]
     public async Task<IActionResult> GetQuestionDetail(int id)
     {
+        var cacheKey = $"public:questions:detail:{id}";
+
+        if (_cache.TryGetValue(cacheKey, out QuestionDetailResponse? cachedQuestion))
+        {
+            return Ok(ApiResponse<QuestionDetailResponse>.Success(
+                cachedQuestion!,
+                "Success from memory cache."
+            ));
+        }
+
         var question = await _context.Questions
+            .AsNoTracking()
             .Where(q => q.Id == id)
             .Select(q => new QuestionDetailResponse
             {
@@ -243,11 +300,11 @@ public class PublicController : ControllerBase
 
         if (question == null)
         {
-            // return NotFound("Question not found.");
-            return BadRequest(ApiResponse<string>.Fail(404, "Question not found."));
+            return NotFound(ApiResponse<string>.Fail(404, "Question not found."));
         }
 
-        // return Ok(question);
+        _cache.Set(cacheKey, question, PublicCacheDuration);
+
         return Ok(ApiResponse<QuestionDetailResponse>.Success(question));
     }
 
@@ -257,7 +314,11 @@ public class PublicController : ControllerBase
     SubmitAnswerRequest request
 )
     {
+        /* 
+        AsNoTracking(): 这些 Public GET 都只是查询，不需要 EF Core 跟踪实体变化
+         */
         var question = await _context.Questions
+            .AsNoTracking()
             .FirstOrDefaultAsync(q => q.Id == id);
 
         if (question == null)

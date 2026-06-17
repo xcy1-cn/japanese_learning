@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 // 2. JWT
 builder.Services.AddAuthentication(options =>
 {
@@ -66,6 +67,9 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
+
+// memory 
+builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 
