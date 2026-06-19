@@ -131,3 +131,11 @@
 /Users/xcy-macbook/Desktop/项目库/JapaneseLearningApi/bin/Debug/net10.0/Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 /Users/xcy-macbook/Desktop/项目库/JapaneseLearningApi/bin/Debug/net10.0/Microsoft.IdentityModel.Tokens.dll
 /Users/xcy-macbook/Desktop/项目库/JapaneseLearningApi/bin/Debug/net10.0/System.IdentityModel.Tokens.Jwt.dll
+/Users/xcy-macbook/Desktop/项目库/JapaneseLearningApi/bin/Debug/net10.0/ClosedXML.dll
+/Users/xcy-macbook/Desktop/项目库/JapaneseLearningApi/bin/Debug/net10.0/ClosedXML.Parser.dll
+/Users/xcy-macbook/Desktop/项目库/JapaneseLearningApi/bin/Debug/net10.0/DocumentFormat.OpenXml.dll
+/Users/xcy-macbook/Desktop/项目库/JapaneseLearningApi/bin/Debug/net10.0/DocumentFormat.OpenXml.Framework.dll
+/Users/xcy-macbook/Desktop/项目库/JapaneseLearningApi/bin/Debug/net10.0/ExcelNumberFormat.dll
+/Users/xcy-macbook/Desktop/项目库/JapaneseLearningApi/bin/Debug/net10.0/RBush.dll
+/Users/xcy-macbook/Desktop/项目库/JapaneseLearningApi/bin/Debug/net10.0/SixLabors.Fonts.dll
+/Users/xcy-macbook/Desktop/项目库/JapaneseLearningApi/bin/Debug/net10.0/System.IO.Packaging.dll

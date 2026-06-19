@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using JapaneseLearningApi.Models;
 using Microsoft.AspNetCore.Identity;
 using JapaneseLearningApi.Services;
+using JapaneseLearning.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +54,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 
 builder.Services.AddControllers();
+// excel import
+builder.Services.AddScoped<IImportService, ImportService>();
 
 builder.Services.AddEndpointsApiExplorer();
 
@@ -73,6 +76,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddMemoryCache();
 builder.Services.AddScoped<PublicCacheInvalidationService>();
 
+
 var app = builder.Build();
 
 app.UseSwagger();
@@ -85,6 +89,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
 
 
 //seed data
